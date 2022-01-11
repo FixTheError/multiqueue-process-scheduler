@@ -1,0 +1,29 @@
+The existing round-robin scheduler in DLXOS works by moving the head of the
+runQueue linked list which is the process pointed to by currentPCB and therefore 
+the process currently running, to the tail of the runQueue. The scheduler then points 
+currentPCB to the new head of the runQueue effectively running the next process in line
+to the one that was just switched out for at most 10ms.
+
+The new WinNT scheduler will have an array of linked list queues and each queue will be 
+assigned an index corresponding to the priority of the processes it contains, 
+base priority being calculated by subtracting the nice value of the pcb from 15. 
+The scheduler will still run the queues in a round-robin manner but cycle through the queue 
+array every second to avoid low priority process starvation through a conditional statement 
+checking a counter that increments once every 10ms clock interval. The scheduler will also
+increment the info variable of every process in the waitqueue every clock interval and once
+it becomes greater than 300, it will be set back to 0, boosted to priority level 15 and given
+double the base quantum and once it reaches a value of zero it is moved back to base priority 
+and it's quantum set back to base quantum.
+
+Implementation was pretty well the same as above except, I misread the document while writing 
+before implementation and made the scheduler scan the runqueues instead of the waitqueues 
+for processes that have been ready for long enough for info to become 300 or greater, this is
+incremented by a nested loop that runs every time Process Schedule is called. I also 
+initially missed the part about incrementing priority after waiting. I had to add a variable
+to tell the scheduler why if priority is higher than base so that it could decay by one at the
+end of each quantum if it was boosted by ProcessWakeup and immediately back to base priority 
+if the boost was because it was ready too long. Queues were cycled through by the same means 
+as the original scheduler and highest priority process was selected by starting at index 31 
+and looping down the array to the first non-empty queue.
+
+I worked on this alone, so it would be pointless to include a group.txt

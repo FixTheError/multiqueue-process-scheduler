@@ -1,0 +1,2 @@
+The new scheduler seems to be slower with 2 processes and faster with 10 processes but runs 
+out of virtual memory when 20 processes are created.
